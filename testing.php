@@ -11,7 +11,22 @@ $client = new Client('http://127.0.0.1:8401', array(
     )
 ));
 
-$request = $client->post('/api/programmers');
+$nickname = 'ObjectOrienter' . rand(0, 999);
+$data = array(
+    'nickname' => $nickname,
+    'avatarNumber' => 5,
+    'tagLine' => 'A test dev!'
+);
+
+//$request = $client->post('/api/programmers');
+$request = $client->post('/api/programmers', null, json_encode($data));
+$response = $request->send();
+
+$url = $response->getHeader('Location');
+$request = $client->get($url);
+$response = $request->send();
+
+$request = $client->get('/api/programmers');
 $response = $request->send();
 
 echo $response;
