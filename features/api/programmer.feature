@@ -60,3 +60,4 @@ Feature: Programmer
     When I request "PUT /api/programmers/CowboyCoder"
     Then the response status code should be 200
     And the "avatarNumber" property should equal "2"
+    But the "nickname" property should equal "CowboyCoder"
