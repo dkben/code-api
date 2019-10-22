@@ -30,6 +30,13 @@ class ProgrammerController extends BaseController
 
         $this->handleRequest($request, $programmer);
 
+        $errors = $this->validate($programmer);
+        if (!empty($errors)) {
+            return $this->handleValidationResponse($errors);
+        }
+
+        $this->save($programmer);
+
         $url = $this->generateUrl('api_programmers_show', array(
            'nickname' => $programmer->nickname,
         ));
@@ -52,6 +59,12 @@ class ProgrammerController extends BaseController
 
         $this->handleRequest($request, $programmer);
 
+        $errors = $this->validate($programmer);
+        if (!empty($errors)) {
+            return $this->handleValidationResponse($errors);
+        }
+
+        $this->save($programmer);
         $data = $this->serializeProgrammer($programmer);
 
         $response = new JsonResponse($data, 200);
@@ -136,9 +149,17 @@ class ProgrammerController extends BaseController
         }
 
         $programmer->userId = $this->findUserByUsername('hsuweni')->id;
-
-        $this->save($programmer);
     }
 
-    // 18 節是純理論
+    private function handleValidationResponse(array $errors)
+    {
+        $data = array(
+            'type' => 'validation_error',
+            'title' => 'There was a validation error',
+            'errors' => $errors,
+        );
+
+        return new JsonResponse($data, 400);
+    }
+
 }
