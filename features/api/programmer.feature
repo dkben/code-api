@@ -20,25 +20,25 @@ Feature: Programmer
     And the "Location" header should be "/api/programmers/ObjectOrienter"
     And the "nickname" property should equal "ObjectOrienter"
 
-  Scenario: Validation errors
-    Given I have the payload:
-    """
-    {
-      "avatarNumber" : "2",
-      "tagLine": "I'm from a test!"
-    }
-    """
-    When I request "POST /api/programmers"
-    Then the response status code should be 400
-    And the following properties should exist:
-    """
-    type
-    title
-    errors
-    """
-    And the "errors.nickname" property should exist
-    But the "errors.avatarNumber" property should not exist
-    And the "Content-Type" header should be "application/problem+json"
+#  Scenario: Validation errors
+#    Given I have the payload:
+#    """
+#    {
+#      "avatarNumber" : "2",
+#      "tagLine": "I'm from a test!"
+#    }
+#    """
+#    When I request "POST /api/programmers"
+#    Then the response status code should be 400
+#    And the following properties should exist:
+#    """
+#    type
+#    title
+#    errors
+#    """
+#    And the "errors.nickname" property should exist
+#    But the "errors.avatarNumber" property should not exist
+#    And the "Content-Type" header should be "application/problem+json"
 
   Scenario: Error response on invalid JSON
     Given I have the payload:
@@ -51,7 +51,7 @@ Feature: Programmer
     When I request "POST /api/programmers"
     Then the response status code should be 400
     And the "Content-Type" header should be "application/problem+json"
-    And the "type" property should equal "invalid_body_format"
+    And the "type" property should contain "invalid_body_format"
 
   Scenario: GET one programmer
     Given the following programmers exist:
@@ -67,6 +67,13 @@ Feature: Programmer
     tagLine
     """
     And the "nickname" property should equal "UnitTester"
+
+  Scenario: Proper 404 exception on no programmer
+    When I request "GET /api/programmers/fake"
+    Then the response status code should be 404
+    And the "Content-Type" header should be "application/problem+json"
+    And the "type" property should equal "about:blank"
+    And the "title" property should equal "Not Found"
 
   Scenario: GET a collection of programmers
     Given the following programmers exist:
