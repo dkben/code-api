@@ -23,6 +23,7 @@ use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\MonologServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Finder\Finder;
 use KnpU\CodeBattle\DataFixtures\FixturesManager;
@@ -292,8 +293,11 @@ class Application extends SilexApplication
         $app = $this;
 
         $this->error(function(\Exception $e, $statusCode) use ($app) {
-            // only act on /api URLs
             if (strpos($app['request']->getPathInfo(), '/api') !== 0) {
+                return;
+            }
+
+            if ($app['debug'] && $statusCode == 500) {
                 return;
             }
 
@@ -301,14 +305,16 @@ class Application extends SilexApplication
                 $apiProblem = $e->getApiProblem();
             } else {
                 $apiProblem = new ApiProblem($statusCode);
+
+                if ($e instanceof HttpException) {
+                    $apiProblem->set('detail', $e->getMessage());
+                }
             }
 
             $data = $apiProblem->toArray();
             if ($data['type'] != 'about:blank') {
                 $data['type'] = 'http://127.0.0.1:8401/api/docs/errors#'.$data['type'];
             }
-
-            $apiProblem = $e->getApiProblem();
             $response = new JsonResponse(
                 $data,
                 $apiProblem->getStatusCode()
