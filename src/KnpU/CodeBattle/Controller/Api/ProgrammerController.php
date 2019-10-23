@@ -3,6 +3,7 @@
 namespace KnpU\CodeBattle\Controller\Api;
 
 use KnpU\CodeBattle\Api\ApiProblem;
+use KnpU\CodeBattle\Api\ApiProblemException;
 use KnpU\CodeBattle\Controller\BaseController;
 use KnpU\CodeBattle\Model\Programmer;
 use Silex\Application;
@@ -34,7 +35,7 @@ class ProgrammerController extends BaseController
 
         $errors = $this->validate($programmer);
         if (!empty($errors)) {
-            return $this->handleValidationResponse($errors);
+            $this->throwApiProblemValidationException($errors);
         }
 
         $this->save($programmer);
@@ -63,7 +64,7 @@ class ProgrammerController extends BaseController
 
         $errors = $this->validate($programmer);
         if (!empty($errors)) {
-            return $this->handleValidationResponse($errors);
+            $this->throwApiProblemValidationException($errors);
         }
 
         $this->save($programmer);
@@ -130,9 +131,12 @@ class ProgrammerController extends BaseController
         $data = json_decode($request->getContent(), true);
 
         if ($data === null) {
-            $apiProblem = new ApiProblem(400, ApiProblem::TYPE_INVALID_REQUEST_BODY_FORMAT);
+            $problem = new ApiProblem(
+                400,
+                ApiProblem::TYPE_INVALID_REQUEST_BODY_FORMAT
+            );
 
-            throw new HttpException(400, 'Invalid JSON!!!!!');
+            throw new ApiProblemException($apiProblem);
         }
 
         $isNew = !$programmer->id;
@@ -147,7 +151,7 @@ class ProgrammerController extends BaseController
             if ($request->isMethod('PATCH') && !isset($data[$property])) {
                 continue;
             }
-            
+
             $val = isset($data[$property]) ? $data[$property] : null;
             $programmer->$property = $val;
         }
@@ -155,7 +159,7 @@ class ProgrammerController extends BaseController
         $programmer->userId = $this->findUserByUsername('hsuweni')->id;
     }
 
-    private function handleValidationResponse(array $errors)
+    private function throwApiProblemValidationException(array $errors)
     {
         $apiProblem = new ApiProblem(
             400,
@@ -163,12 +167,7 @@ class ProgrammerController extends BaseController
         );
         $apiProblem->set('errors', $errors);
 
-        $response = new JsonResponse(
-            $apiProblem->toArray(),
-            $apiProblem->getStatusCode());
-        $response->headers->set('Content-Type', 'application/problem+json');
-
-        return $response;
+        throw new ApiProblemException($apiProblem);
     }
 
 }
